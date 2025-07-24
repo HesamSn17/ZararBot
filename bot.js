@@ -1,9 +1,9 @@
 import { Telegraf, Scenes, session } from 'telegraf';
+import 'dotenv/config';
 
 const { WizardScene, Stage } = Scenes;
 
-    const bot=new Telegraf("8197643624:AAFdSHcBYsN8yXN7iMHA2kxUGpZvWxitxeU");
-
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const startbot= ()=>{
 
 const calculationWizard = new WizardScene(
