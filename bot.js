@@ -1,4 +1,4 @@
-import { Telegraf, Scenes, session } from 'telegraf';
+import { Telegraf, Scenes, session,Markup  } from 'telegraf';
 import 'dotenv/config';
 
 const { WizardScene, Stage } = Scenes;
@@ -63,27 +63,32 @@ const startbot = () => {
       return ctx.wizard.next();
     },
 
-    async (ctx) => {
-      if (!ctx.wizard.state.data) ctx.wizard.state.data = {};
-      const persons = parseInt(ctx.message.text);
-      if (isNaN(persons)) {
-        return ctx.reply("تعداد نفرات باید عدد باشه:");
-      }
-      ctx.wizard.state.data.persons = persons;
+    
+    
+async (ctx) => {
+  ctx.wizard.state.data.persons = parseInt(ctx.message.text);
+  const { loss, persons } = ctx.wizard.state.data;
+  const commission = persons * 15;
 
-      const { loss } = ctx.wizard.state.data;
-      const commission = persons * 15;
-      const net = commission - loss;
+  const net = commission - loss;
 
-      if (net > 0) {
-        ctx.reply(`رزرو به صرفه‌ست. سود خالص شما ${net} دلار هست.`);
-      } else {
-        ctx.reply(`این رزرو به‌صرفه نیست. ${Math.abs(net)} دلار ضرر داری بعد از دریافت کمیسیون.`);
-      }
+  if (net > 0) {
+    await ctx.reply(`رزرو به صرفه‌ست. سود خالص شما ${net} دلار هست.`);
+  } else {
+    await ctx.reply(`این رزرو به‌صرفه نیست. ${Math.abs(net)} دلار ضرر داری بعد از دریافت کمیسیون.`);
+  }
 
-      return ctx.scene.leave();
-    }
+  // ارسال دکمه برای شروع مجدد
+  await ctx.reply(
+    "می‌خوای دوباره حساب کنیم؟",
+    Markup.inlineKeyboard([
+      Markup.button.callback("🔁 دوباره حساب کن", "restart_wizard"),
+    ])
   );
+
+  return ctx.scene.leave(); // از صحنه خارج می‌شه ولی منتظر کلیک می‌مونه
+});
+
 
   const stage = new Stage([calculationWizard]);
 
@@ -91,7 +96,10 @@ const startbot = () => {
   bot.use(stage.middleware());
 
   bot.command("start", (ctx) => ctx.scene.enter("calculation-wizard"));
-
+bot.action("restart_wizard", async (ctx) => {
+  await ctx.answerCbQuery(); // بسته شدن انیمیشن دکمه
+  await ctx.scene.enter("calculation-wizard");
+});
   bot.launch();
 };
 
